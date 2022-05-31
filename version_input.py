@@ -38,7 +38,8 @@ def move_wanted_images(query, output, required_text, must_required_text, unwante
             text = ""
             try:
                 img_raw = cv2.imread(image_path)
-                img = cv2.cvtColor(img_raw, cv2.COLOR_BGR2RGB)
+                img_raw = cv2.cvtColor(img_raw, cv2.COLOR_BGR2GRAY)
+                img = cv2.bilateralFilter(img_raw, 9, 75, 75)
                 text = pytesseract.image_to_string(img).lower()
             except OSError as error:
                 print("PyTesseract Error! " + str(error))
@@ -65,3 +66,4 @@ my_unwanted_text = input("Unwanted Text: ")
 
 download_images(my_query, my_limit, my_output)
 move_wanted_images(my_query, my_output, my_required_text, my_must_required_text, my_unwanted_text)
+

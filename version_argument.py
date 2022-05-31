@@ -61,7 +61,8 @@ def move_wanted_images():
                 image_path.lower().endswith(".jpg") or \
                 image_path.lower().endswith(".jpeg"):
             img_raw = cv2.imread(image_path)
-            img = cv2.cvtColor(img_raw, cv2.COLOR_BGR2RGB)
+            img_raw = cv2.cvtColor(img_raw, cv2.COLOR_BGR2GRAY)
+            img = cv2.bilateralFilter(img_raw, 9, 75, 75)
             text = pytesseract.image_to_string(img).lower()
             if args["required_text"] in text and args["must_required_text"] in text and args["unwanted_text"] not in text:
                 wanted_counter += 1
