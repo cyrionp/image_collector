@@ -13,7 +13,7 @@ def download_images(query, limit, output):
                             force_replace=False, timeout=15, verbose=True)
 
     except OSError as error:
-        print("An exception occured: " + str(error))
+        print("Downloader error! " + str(error))
 
 
 def move_wanted_images(query, output, required_text, must_required_text, unwanted_text):
@@ -27,11 +27,10 @@ def move_wanted_images(query, output, required_text, must_required_text, unwante
             os.mkdir(wanted_images_path)
             print(wanted_images_path + " is created")
         except OSError as error:
-            print("Error! " + str(error))
+            print("Creating directory error! " + str(error))
 
     for image in images_list:
         image_path = path + "/" + image
-        print(image_path)
         if image_path.lower().endswith(".png") or \
                 image_path.lower().endswith(".jpg") or \
                 image_path.lower().endswith(".jpeg"):
@@ -42,15 +41,28 @@ def move_wanted_images(query, output, required_text, must_required_text, unwante
                 img = cv2.bilateralFilter(img_raw, 9, 75, 75)
                 text = pytesseract.image_to_string(img).lower()
             except OSError as error:
-                print("PyTesseract Error! " + str(error))
+                print("PyTesseract error! " + str(error))
             if required_text in text and must_required_text in text and unwanted_text not in text:
                 wanted_counter += 1
                 try:
                     wanted_image_path = wanted_images_path + "/" + image
                     Path(image_path).rename(wanted_image_path)
-                    print(f"{image} is moved to wanted directory")
+                    print(image + " is moved to wanted directory")
                 except OSError as error:
-                    print("Error! " + str(error))
+                    print("Image moving error! " + str(error))
+
+            else:
+                try:
+                    os.remove(image_path)
+                    print(image + " is deleted")
+                except OSError as error:
+                    print("Image deleting error! " + str(error))
+        elif image_path.lower().endswith(".gif"):
+            try:
+                os.remove(image_path)
+                print(image + " is deleted")
+            except OSError as error:
+                print("Image deleting error! " + str(error))
 
     print(f"Total {wanted_counter} images are moved to wanted directory")
 
@@ -66,4 +78,3 @@ my_unwanted_text = input("Unwanted Text: ")
 
 download_images(my_query, my_limit, my_output)
 move_wanted_images(my_query, my_output, my_required_text, my_must_required_text, my_unwanted_text)
-

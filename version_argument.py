@@ -21,18 +21,6 @@ args = vars(ap.parse_args())
 def download_images():
     force_replace = False
 
-    '''
-    if os.path.isdir(args["output"]):
-        force_replace_selection = input("Output dir already exists, do you want to delete contents in it? [y/n]: ")
-        if force_replace_selection == "y":
-            force_replace = True
-        elif force_replace_selection == "n":
-            force_replace = False
-        else:
-            force_replace = False
-            print("Force replace is set false")
-    '''
-
     try:
         print("Downloading started..")
         downloader.download(args["query"], args["limit"], args["output"], adult_filter_off=True,
@@ -72,6 +60,19 @@ def move_wanted_images():
                     print(f"{image} is moved to wanted directory")
                 except OSError as error:
                     print("Error! " + str(error))
+
+            else:
+                try:
+                    os.remove(image_path)
+                    print(image + " is deleted")
+                except OSError as error:
+                    print("Image deleting error! " + str(error))
+        elif image_path.lower().endswith(".gif"):
+            try:
+                os.remove(image_path)
+                print(image + " is deleted")
+            except OSError as error:
+                print("Image deleting error! " + str(error))
 
     print(f"Total {wanted_counter} images are moved to wanted directory")
 
