@@ -1,5 +1,7 @@
 import argparse
 import os
+import queue
+import threading
 from pathlib import Path
 
 import cv2
@@ -17,8 +19,14 @@ ap.add_argument("-r", "--required_text", required=True, help="required text on i
 ap.add_argument("-u", "--unwanted-text", required=False, help="unwanted text on images")
 args = vars(ap.parse_args())
 
+queue = queue.Queue()
+
+path = ""
+images_list = []
+
 
 def download_images():
+    global path, images_list
     force_replace = False
 
     try:
@@ -26,14 +34,16 @@ def download_images():
         downloader.download(args["query"], args["limit"], args["output"], adult_filter_off=True,
                             force_replace=force_replace, timeout=15, verbose=True)
 
+        path = args["output"] + "/" + args["query"]
+        images_list = os.listdir(path)
+
     except OSError as error:
         print("An exception occured: " + str(error))
 
 
-def move_wanted_images():
-    path = args["output"] + "/" + args["query"]
+def move_wanted_images(q):
+    global images_list, path
     wanted_images_path = path + "/" + "wanted"
-    images_list = os.listdir(path)
     wanted_counter = 0
 
     if not os.path.exists(wanted_images_path):
@@ -43,7 +53,8 @@ def move_wanted_images():
         except OSError as error:
             print("Error! " + str(error))
 
-    for image in images_list:
+    while not q.empty():
+        image = q.get()
         image_path = path + "/" + image
         if image_path.lower().endswith(".png") or \
                 image_path.lower().endswith(".jpg") or \
@@ -73,9 +84,18 @@ def move_wanted_images():
                 print(image + " is deleted")
             except OSError as error:
                 print("Image deleting error! " + str(error))
+        q.task_done()
 
     print(f"Total {wanted_counter} images are moved to wanted directory")
 
 
 download_images()
-move_wanted_images()
+
+for i in images_list:
+    queue.put(i)
+
+for i in range(2):
+    worker = threading.Thread(target=move_wanted_images, args=(queue,), daemon=True)
+    worker.start()
+
+queue.join()
